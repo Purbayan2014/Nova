@@ -4,6 +4,7 @@ import (
 	"Nova/ast"
 	"Nova/lexer"
 	"Nova/token"
+	"fmt"
 )
 
 // Parser Structure of our Parser
@@ -13,6 +14,7 @@ type Parser struct {
 
 	curtoken  token.Token
 	peektoken token.Token // peek token is used if the currtoken doesn't gives enough information
+	errors    []string    // holds the error for types that are not supported by the parser
 }
 
 // NextToken is repeatedly called to the next token in the input curr token and
@@ -83,6 +85,7 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		p.nextToken()
 		return true
 	} else {
+		p.peekError(t)
 		return false
 	}
 }
@@ -95,9 +98,19 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curtoken.Type == t
 }
 
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
+		t, p.peektoken.Type)
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
 // Advances both the next and the curr token
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, errors: []string{}}
 
 	// setting the next token and the curr token
 	// by reading two tokens consecutively
